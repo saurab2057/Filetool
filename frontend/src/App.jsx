@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeContext';
 import MainLayout from '@/pages/MainLayout';
 import HomePage from '@/pages/Home';
-import Mp4ToMp3Converter from '@/pages/MP4toMp3';
+import Mp4ToMp3Converter from '@/pages/Mp4toMp3';
 import PngToSvgConverter from '@/pages/pngtosvg';
 import SignUpForm from '@/pages/Signup';
 import LoginForm from '@/pages/Login';
