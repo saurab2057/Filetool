@@ -388,9 +388,11 @@ These include common document types (PDF, DOCX, XLSX, PPTX, TXT), image formats 
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col z-50 transition-colors duration-300">
+    // MODIFIED: This container is now full-screen on mobile and a widget on larger screens (sm and up)
+    <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-96 sm:h-[600px] bg-white dark:bg-gray-900 sm:rounded-2xl shadow-2xl border-gray-200 dark:border-gray-700 sm:border flex flex-col z-50 transition-colors duration-300">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
+      {/* MODIFIED: Header corners are only rounded on larger screens */}
+      <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 sm:rounded-t-2xl flex items-center justify-between flex-shrink-0">
         <div>
           <h3 className="font-semibold">Hi,</h3>
           <p className="text-sm text-emerald-100">How can we help?</p>
