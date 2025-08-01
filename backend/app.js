@@ -76,15 +76,18 @@ app.use(
 );
 
 
-// ✅ 3. Body/Cookie Parsers and Logging
+// ✅ 3. SANITIZE INPUT — Moved up!
+app.use(mongoSanitize());
+
+// ✅ 4. Body Parsing
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
+
+// ✅ 5. Cookie & Logging
 app.use(cookieParser());
-app.use(express.json({ limit: '50kb' })); // Parse JSON with high limit
-app.use(express.urlencoded({ limit: '1mb', extended: true })); // Parse form data with same limit
-app.use(mongoSanitize()); // Sanitize req.body, req.query, req.params (MUST come after body parsers)
-app.use(morgan('dev')); // Log after everything is parsed and sanitized
+app.use(morgan('dev'));
 
-
-// ✅ 4. Rate Limiting
+// ✅ 6. Rate Limiting
 // Apply rate limiting before your routes to protect them.
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -96,7 +99,7 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 
-// ✅ 5. Mounting The Application Routes (The Bartender)
+// ✅ 7. Mounting The Application Routes (The Bartender)
 // Finally, direct the request to the correct route handler.
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
