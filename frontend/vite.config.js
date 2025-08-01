@@ -11,12 +11,19 @@ export default defineConfig({
     },
   },
   
-  // --- START: ADD THIS BLOCK TO FIX THE GOOGLE LOGIN ERROR ---
+  // Your existing server block is fine.
   server: {
-
-    // allowedHosts: [
-    //   'your-ngrok-or-other-host.com'
-    // ],
+    // ...
   },
 
+  // --- START: ADD THIS BLOCK TO REMOVE COMMENTS FROM PRODUCTION BUILD ---
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      format: {
+        comments: false, // This is the crucial line that removes all comments
+      },
+    },
+  },
+  // --- END: ADD THIS BLOCK ---
 })

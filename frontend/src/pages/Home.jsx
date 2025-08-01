@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {Lock, Globe, CheckCircle} from 'lucide-react';
-import FileUploader from '@/components/Fileuploader';
+import FileUploader from '@/components/FileUploader';
 import { AnimatedStats } from '@/components/AnimatedStats'
 import { AnimatedTestimonials } from '@/components/AnimatedReview';
 import { useNavigate } from 'react-router-dom';

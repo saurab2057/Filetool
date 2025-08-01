@@ -8,6 +8,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import mongoSanitize from 'express-mongo-sanitize';
+
 
 // --- Route Imports ---
 import authRoutes from './routes/authRoute.js';
@@ -58,7 +60,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "https://apis.google.com", "https://accounts.google.com/"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com/"],
+        styleSrc: ["'self'", "'unsafe-inline'","https://accounts.google.com/"],
         imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com"],
         frameSrc: ["'self'", "https://accounts.google.com/"],
         connectSrc: ["'self'", "https://accounts.google.com/"],
@@ -74,17 +76,18 @@ app.use(
 
 
 // ✅ 3. Body/Cookie Parsers and Logging
-// These should come after security but before the routes.
-app.use(express.json());
 app.use(cookieParser());
-app.use(morgan('dev'));
+app.use(express.json({ limit: '50kb' })); // Parse JSON with high limit
+app.use(express.urlencoded({ limit: '1mb', extended: true })); // Parse form data with same limit
+app.use(mongoSanitize()); // Sanitize req.body, req.query, req.params (MUST come after body parsers)
+app.use(morgan('dev')); // Log after everything is parsed and sanitized
 
 
 // ✅ 4. Rate Limiting
 // Apply rate limiting before your routes to protect them.
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200000,
+    max: 200,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests have been made from this IP, please try again later.' }

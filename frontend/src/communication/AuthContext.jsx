@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const logout = async (shouldNotifyServer = true) => {
+  const logout = async (shouldNotifyServer = true, isCatastrophicFailure = false) => {
     if (shouldNotifyServer) {
       try {
         await apiClient.post('/api/auth/logout');
@@ -21,14 +21,26 @@ export const AuthProvider = ({ children }) => {
         console.error('Server logout failed, but clearing client state anyway.', error);
       }
     }
+    
+    // Immediately clear state and headers
     setUser(null);
     setAccessToken(null);
+    delete apiClient.defaults.headers.common['Authorization'];
+
+    // Immediately clear all authentication-related storage
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
     localStorage.removeItem('adminActiveTab');
-    delete apiClient.defaults.headers.common['Authorization'];
-    setAuthLoading(false);
-    navigate('/', { replace: true }); // Use replace to avoid history stack issues
+    
+    // --- [NEW] --- Logic to handle how to redirect
+    // For a catastrophic failure, a full page reload is the most reliable way 
+    // to break any render loops and guarantee a completely clean state.
+    if (isCatastrophicFailure) {
+      window.location.href = '/'; 
+    } else {
+      // For a normal, user-initiated logout, React Router's navigation is smoother.
+      navigate('/', { replace: true });
+    }
   };
 
   useEffect(() => {
@@ -108,7 +120,7 @@ export const AuthProvider = ({ children }) => {
         if (localStorage.getItem('accessToken')) {
           initializeAuth();
         }
-      }, 5 * 60 * 1000); // Refresh every 5 minutes
+      }, 10 * 60 * 1000);     // Refresh every 10 minutes
     }
 
     return () => {

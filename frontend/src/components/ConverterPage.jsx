@@ -1,13 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import apiClient from '@/communication/api'; // Make sure this path is correct
 import { useLocation } from 'react-router-dom';
-import { Settings, FileText, Loader, CheckCircle, AlertCircle, XCircle } from 'lucide-react'; // Added XCircle for the clear button icon
+import { useAuth } from '@/communication/AuthContext'; // Adjust the import path as necessary
+import { Settings, FileText, Loader, CheckCircle, AlertCircle, XCircle, Download } from 'lucide-react'; // Added XCircle for the clear button icon
 import FileUploader from '@/components/FileUploader'; // Adjust the import path as necessary
 const MAX_ALLOWED_FILES = 5; // Define a constant for the max file limit
 
 const ConverterPage = ({ fromFormat, toFormat, title, description, settingsComponent: SettingsComponent, defaultSettings }) => {
 
   const location = useLocation();
+
+  const { authLoading, isAuthenticated } = useAuth();
 
   const [files, setFiles] = useState(location.state?.initialFiles || []);
   const [isConverting, setIsConverting] = useState(false);
@@ -23,8 +26,8 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
     // This ensures we only send files that are actually ready to be converted
     const filesToProcess = files.filter(f => f.status === 'ready');
     if (filesToProcess.length === 0) {
-        setIsConverting(false);
-        return; // Nothing to convert
+      setIsConverting(false);
+      return; // Nothing to convert
     }
 
     try {
@@ -48,26 +51,26 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
       // This is the new, robust matching logic. It relies on the order of files,
       // which is not affected by special characters in filenames.
       setFiles(prevFiles => {
-          const processedFiles = [...prevFiles];
-          let resultIndex = 0;
+        const processedFiles = [...prevFiles];
+        let resultIndex = 0;
 
-          processedFiles.forEach((file, index) => {
-              if (file.status === 'converting') {
-                  const result = results[resultIndex];
-                  if (result) {
-                      processedFiles[index] = {
-                          ...file,
-                          status: result.success ? 'completed' : 'error',
-                          downloadUrl: result.downloadUrl || null,
-                          errorMessage: result.message || null,
-                      };
-                  } else {
-                      processedFiles[index] = { ...file, status: 'error', errorMessage: 'No result from server for this file.' }; // More specific message
-                  }
-                  resultIndex++;
-              }
-          });
-          return processedFiles;
+        processedFiles.forEach((file, index) => {
+          if (file.status === 'converting') {
+            const result = results[resultIndex];
+            if (result) {
+              processedFiles[index] = {
+                ...file,
+                status: result.success ? 'completed' : 'error',
+                downloadUrl: result.downloadUrl || null,
+                errorMessage: result.message || null,
+              };
+            } else {
+              processedFiles[index] = { ...file, status: 'error', errorMessage: 'No result from server for this file.' }; // More specific message
+            }
+            resultIndex++;
+          }
+        });
+        return processedFiles;
       });
 
     } catch (error) {
@@ -75,15 +78,15 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
       // Enhanced error message extraction
       let errorMessage = 'An unknown server error occurred.';
       if (error.response) {
-          if (error.response.data && error.response.data.message) {
-              errorMessage = error.response.data.message;
-          } else if (error.response.status) {
-              errorMessage = `Server responded with status: ${error.response.status}`;
-          }
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.status) {
+          errorMessage = `Server responded with status: ${error.response.status}`;
+        }
       } else if (error.request) {
-          errorMessage = 'No response received from server. Please check your network connection.';
+        errorMessage = 'No response received from server. Please check your network connection.';
       } else {
-          errorMessage = error.message || 'An unexpected error occurred.';
+        errorMessage = error.message || 'An unexpected error occurred.';
       }
 
       setFiles(prev => prev.map(f => (f.status === 'converting' ? { ...f, status: 'error', errorMessage } : f)));
@@ -166,7 +169,14 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
   const completedOrErrorFiles = files.filter(f => f.status === 'completed' || f.status === 'error').length;
   const convertingFiles = files.filter(f => f.status === 'converting').length;
 
-
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Loader className="w-12 h-12 text-blue-600 animate-spin" />
+        <p className="ml-4 text-xl text-gray-700 dark:text-gray-300">Verifying session...</p>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
@@ -196,7 +206,7 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
 
         {uploadLimitExceeded && (
           <p className="text-red-500 dark:text-red-400 text-center mb-4">
-            You can only upload a maximum of {MAX_ALLOWED_FILES} files. Some files might not have been added.
+            You can only upload a maximum of {MAX_ALLOWED_FILES} files.
           </p>
         )}
 
@@ -224,13 +234,13 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3 shrink-0">
+                    <div className="flex items-center space-x-1 shrink-0">
                       {file.status === 'ready' && (
                         <>
                           <button onClick={() => setEditingFileId(file.id)} className="p-2 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40" aria-label="Settings">
                             <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           </button>
-                          <button onClick={() => removeFile(file.id)} className="text-red-600 dark:text-red-400 text-sm font-medium px-3 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20">
+                          <button onClick={() => removeFile(file.id)} className="text-red-600 dark:text-red-400 text-sm font-medium px-1 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20">
                             Remove
                           </button>
                         </>
@@ -238,28 +248,28 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
                       {file.status === 'converting' && (
                         <div className="flex items-center space-x-2">
                           <Loader className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
-                          <span className="text-sm text-blue-600 dark:text-blue-400">Converting...</span>
                         </div>
                       )}
                       {file.status === 'completed' && (
-                        <>
+                        <div className="flex items-center space-x-2">
                           <a
                             href={file.downloadUrl}
                             download
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-1"
+                            aria-label="Download"
+                            className="bg-green-600 hover:bg-green-700 text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium flex items-center transition-all"
                           >
-                            {/* Download icon removed as requested */}
-                            <span>Download</span>
+                            <Download className="w-5 h-5" />
+                            <span className="hidden sm:inline ml-1">Download</span>
                           </a>
-                          {/* New Clear button for completed files */}
                           <button
                             onClick={() => removeFile(file.id)}
-                            className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 ml-2"
+                            aria-label="Clear"
+                            className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white p-2 sm:px-3 sm:py-2 rounded-lg text-sm font-medium flex items-center transition-all"
                           >
-                            <XCircle className="w-4 h-4" />
-                            <span>Clear</span>
+                            <XCircle className="w-5 h-5" />
+                            <span className="hidden sm:inline ml-1">Clear</span>
                           </button>
-                        </>
+                        </div>
                       )}
                       {file.status === 'error' && (
                         <>
@@ -270,10 +280,10 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
                           {/* New Clear button for error files */}
                           <button
                             onClick={() => removeFile(file.id)}
+                            aria-label="Clear"
                             className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 ml-2"
                           >
                             <XCircle className="w-4 h-4" />
-                            <span>Clear</span>
                           </button>
                         </>
                       )}
@@ -288,7 +298,7 @@ const ConverterPage = ({ fromFormat, toFormat, title, description, settingsCompo
         {files.length > 0 && !conversionComplete && (
           <div className="text-center mb-8">
             <button onClick={startConversion} disabled={isConverting} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-blue-400 disabled:to-indigo-400 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-200 flex items-center space-x-2 mx-auto shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:transform-none">
-              {isConverting ? ( <> <Loader className="w-5 h-5 animate-spin" /> <span>Converting Files...</span> </> ) : ( <span>Convert {files.length} File{files.length > 1 ? 's' : ''}</span> )}
+              {isConverting ? (<>  <span>Converting</span> </>) : (<span>Convert {files.length} File{files.length > 1 ? 's' : ''}</span>)}
             </button>
           </div>
         )}

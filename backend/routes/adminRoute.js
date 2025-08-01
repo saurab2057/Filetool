@@ -33,17 +33,6 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-
-// --- GET ALL JOBS ---
-router.get('/jobs', async (req, res) => {
-    try {
-        const jobs = await FileHistory.find().populate('userId', 'email name').sort({ processedAt: -1 });
-        res.json(jobs);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching jobs.', error: error.message });
-    }
-});
-
 // --- GET ALL JOBS ---
 router.get('/jobs', async (req, res) => {
     try {
