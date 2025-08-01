@@ -4,6 +4,12 @@
 @tailwind utilities;
 
 
+
+body, html {
+  overflow-x: hidden;
+}
+
+
 body, html {
   overflow-x: hidden;
 }
